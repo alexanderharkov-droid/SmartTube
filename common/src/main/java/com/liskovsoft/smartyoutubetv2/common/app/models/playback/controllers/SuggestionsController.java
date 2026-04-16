@@ -226,8 +226,10 @@ public class SuggestionsController extends BasePlayerController {
 
         video.sync(mediaItemMetadata);
         getPlayer().setVideo(video);
-
-        getPlayer().setNextTitle(getNext());
+// ** //
+        if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
+            getPlayer().setNextTitle(getNext());
+        }
 
         appendDislikes(video);
     }
@@ -273,9 +275,14 @@ public class SuggestionsController extends BasePlayerController {
     }
 
     public Video getNext() {
+//<<<<<<< HEAD
         if (getPlayer() == null || getVideo() == null) {
             return null;
         }
+
+//=======
+        Log.d("SHUFFLE", "SuggestionsController.getNext CALLED");
+//>>>>>>> e0d3bdac9 (WIP: my shuffle changes before upstream sync)
 
         Video result = null;
         Video next = Playlist.instance().getNext();
@@ -283,10 +290,13 @@ public class SuggestionsController extends BasePlayerController {
         if (next != null) {
             next.fromQueue = true;
             result = next;
-        } else if (mNextSectionVideo != null && !getVideo().isShuffled) {
+            Log.d("SHUFFLE", "result = next");
+        } else if (mNextSectionVideo != null && !getVideo().isShuffled) { // 🔥 важно
             result = mNextSectionVideo;
-        } else if (getVideo().nextMediaItem != null) {
+            Log.d("SHUFFLE", "result = mNextSectionVideo");
+        } else if (getVideo() != null && getVideo().nextMediaItem != null) { // 🔥 upstream-safe
             result = Video.from(getVideo().nextMediaItem);
+            Log.d("SHUFFLE", "Video.from(nextMediaItem)");
         }
 
         return result;

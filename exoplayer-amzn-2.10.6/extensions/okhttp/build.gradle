@@ -26,6 +26,7 @@ android {
         minSdkVersion project.ext.minSdkVersion
         targetSdkVersion project.ext.targetSdkVersion
         consumerProguardFiles 'proguard-rules.txt'
+        multiDexEnabled = true
     }
 
     testOptions.unitTests.includeAndroidResources = true

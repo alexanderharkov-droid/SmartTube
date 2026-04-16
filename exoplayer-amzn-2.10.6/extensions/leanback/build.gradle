@@ -25,6 +25,7 @@ android {
     defaultConfig {
         minSdkVersion 17
         targetSdkVersion project.ext.targetSdkVersion
+        multiDexEnabled = true
     }
 
     testOptions.unitTests.includeAndroidResources = true

@@ -16,6 +16,7 @@ android {
         targetSdkVersion project.ext.targetSdkVersion
         versionCode 2
         versionName "0.2"
+        multiDexEnabled = true
     }
 
     buildTypes {

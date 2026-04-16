@@ -26,6 +26,7 @@ android {
     defaultConfig {
         minSdkVersion project.ext.minSdkVersion
         targetSdkVersion project.ext.targetSdkVersion
+        multiDexEnabled = true
     }
 
     // gradle 4.6 migration: disable dimensions mechanism

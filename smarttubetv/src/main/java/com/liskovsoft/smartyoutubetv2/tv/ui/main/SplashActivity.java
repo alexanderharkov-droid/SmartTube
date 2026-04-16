@@ -2,6 +2,8 @@ package com.liskovsoft.smartyoutubetv2.tv.ui.main;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SplashPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.SplashView;
 import com.liskovsoft.smartyoutubetv2.common.misc.MotherActivity;
@@ -14,6 +16,7 @@ public class SplashActivity extends MotherActivity implements SplashView {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("SHUFFLE", "ENTER onCreate SplashActivity");
 
         mNewIntent = getIntent();
 
