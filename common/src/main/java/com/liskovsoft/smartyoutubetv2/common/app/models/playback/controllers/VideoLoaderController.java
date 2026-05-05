@@ -70,7 +70,7 @@ public class VideoLoaderController extends BasePlayerController {
     };
 
     public VideoLoaderController() {
-        Log.d("SHUFFLE", "VideoLoaderController CREATED");
+        //Log.d("SHUFFLE", "VideoLoaderController CREATED");
         mPlaylist = Playlist.instance();
     }
 
@@ -192,6 +192,7 @@ public class VideoLoaderController extends BasePlayerController {
 
 // ** //
     public void loadNext() {
+        Log.d("SHUFFLE", "-----------------------------------------");
         Log.d("SHUFFLE", "ENTER loadNext");
         try {
 
