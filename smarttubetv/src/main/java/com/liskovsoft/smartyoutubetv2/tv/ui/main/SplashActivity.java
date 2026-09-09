@@ -23,7 +23,7 @@ public class SplashActivity extends MotherActivity implements SplashView {
         mPresenter = SplashPresenter.instance(this);
         mPresenter.setView(this);
         mPresenter.onViewInitialized();
-
+ 
         //finish();
     }
 
