@@ -20,6 +20,7 @@ public class ShuffleManager {
     private int globalPlaylistSize = 0;
 
     private void initShuffle(int size, int currentIndex) {
+        Log.d("SHUFFLE", "ENTER initShuffle");
         shuffleOrder = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
@@ -27,7 +28,11 @@ public class ShuffleManager {
         }
 
         shuffleOrder.remove(Integer.valueOf(currentIndex));
+
+        //shuffleOrder.remove(Integer.valueOf(81));
+
         Collections.shuffle(shuffleOrder);
+        //shuffleOrder.add(0,81);
         shuffleOrder.add(0, currentIndex);
 
         shufflePos = 0;
@@ -62,6 +67,7 @@ public class ShuffleManager {
     }
 
     public void ensureInitialized(int size, int currentIndex) {
+        Log.d("SHUFFLE", "ENTER ensureInitialized");
         if (!isInitialized(size)) {
             initShuffle(size, currentIndex);
             pendingShuffleNext = null;
@@ -69,6 +75,7 @@ public class ShuffleManager {
     }
 
     public int getNextIndex(int size, int currentIndex) {
+        Log.d("SHUFFLE", "ENTER getNextIndex");
         ensureInitialized(size, currentIndex);
 
         int nextPos = shufflePos + 1;
@@ -88,6 +95,7 @@ public class ShuffleManager {
 
     @Nullable
     public Video getPendingShuffleNext() {
+        Log.d("SHUFFLE", "ENTER getPendingShuffleNext");
         return pendingShuffleNext;
     }
 
@@ -155,6 +163,7 @@ public class ShuffleManager {
         if (currentVideo == null) {
             return null;
         }
+        Log.d("SHUFFLE", "ENTER createNextRequest");
 
         int size;
 
@@ -166,6 +175,7 @@ public class ShuffleManager {
         }
 
         if (size <= 1) {
+            Log.d("SHUFFLE", "Playlist size = " + size);
             return null;
         }
 

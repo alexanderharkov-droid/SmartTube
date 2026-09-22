@@ -91,7 +91,7 @@ public class VideoLoaderController extends BasePlayerController {
         Log.d("SHUFFLE", "ENTER onInit");
         mSuggestionsController = getController(SuggestionsController.class);
         mErrorFixerController = getController(ErrorFixerController.class);
-        mSleepTimerStartMs = System.currentTimeMillis();
+        //mSleepTimerStartMs = System.currentTimeMillis();
 
         mShuffleManager.reset();
     }
@@ -207,7 +207,7 @@ public class VideoLoaderController extends BasePlayerController {
 
             Video next;
 
-            if (getPlayerData().getPlaybackMode() == PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
+            if (getPlayerData().getPlaybackMode() == PlayerConstants.  && getVideo().playlistInfo.getSize() != -1) {
                 next = consumeNextShuffleVideo();
             } else {
                 next = mSuggestionsController.getNext();
@@ -263,6 +263,7 @@ public class VideoLoaderController extends BasePlayerController {
      * Force load and play!
      */
     private void loadVideo(Video item) {
+        //Log.d("SHUFFLE", "ENTER loadVideo");
         if (getPlayer() != null && item != null) {
             mPlaylist.setCurrent(item);
             getPlayer().setVideo(item);
@@ -306,11 +307,36 @@ public class VideoLoaderController extends BasePlayerController {
         }
     }
 
+// ** //
+    private boolean tryLoadNextNow() {
+        if (getPlayer() == null || getVideo() == null) {
+            return false;
+        }
+
+        Video next;
+
+        if (getPlayerData().getPlaybackMode() == PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
+            next = consumeNextShuffleVideo();
+        } else {
+            next = mSuggestionsController.getNext();
+        }
+
+        if (next != null) {
+            next.isShuffled = getVideo().isShuffled;
+            openVideoInt(next);
+            return true;
+        }
+
+        return false;
+    }
+
     private void loadFormatInfo(Video video) {
+        //Log.d("SHUFFLE", "ENTER loadFormatInfo");
         if (getPlayer() == null) {
             return;
         }
 
+        //Log.d("SHUFFLE", "video.videoId = "+video.videoId);
         // Fix no progress on next video (the engine may still buffering a bit)
         //getPlayer().showProgressBar(true);
         Utils.post(mShowProgressBar);
@@ -322,7 +348,29 @@ public class VideoLoaderController extends BasePlayerController {
                 .subscribe(this::processFormatInfo,
                            error -> {
                                getPlayer().showProgressBar(false);
-                               mErrorFixerController.runFormatErrorAction(error);
+                               //Log.d("SHUFFLE", "ERROR - "+error.toString());
+// ** //
+                               //fallbackToSequential();
+                               //getVideo().playlistInfo.getCurrentIndex();
+                               //Video next = new Video();
+                               //next.id = getVideo().playlistInfo.getCurrentIndex()+1;
+
+                               if (Helpers.containsAny(error.getMessage(), "fromNullable result is null")) {
+                                   Log.d("SHUFFLE", "FORMAT ERROR: fromNullable -> loadSuggestions + loadNext");
+
+                                   if (!tryLoadNextNow()) {
+                                       Log.d("SHUFFLE", "Next not ready -> load suggestions");
+
+                                       mSuggestionsController.loadSuggestions(getVideo());
+                                       loadNextVideo(5_000);
+                                   }
+                                   //mSuggestionsController.loadSuggestions(getVideo());
+                                   //loadNextVideo(5_000);
+                               } else {
+                                   mErrorFixerController.runFormatErrorAction(error);
+                               }
+
+                               //mErrorFixerController.runFormatErrorAction(error);
                            });
     }
 
@@ -596,27 +644,78 @@ public class VideoLoaderController extends BasePlayerController {
 
     @Override
     public void onMetadata(MediaItemMetadata metadata) {
+        Log.d("SHUFFLE", "ENTER onMetadata");
         initRandomNext();
     }
 
 
-    private void initRandomNext() {
-
     @Override
     public void onPlay() {
-        Utils.removeCallbacks(mOnLongBuffering);
+    //    Utils.removeCallbacks(mOnLongBuffering);
     }
 
     @Override
     public void onPause() {
-        Utils.removeCallbacks(mOnLongBuffering);
+    //    Utils.removeCallbacks(mOnLongBuffering);
     }
 
+
+    /*private void initRandomNext() {
+        MediaServiceManager.instance().disposeActions();
+
+        PlaybackView player = getPlayer();
+        PlayerData playerData = getPlayerData();
+        Video current = getVideo();
+
+        if (player == null || playerData == null || current == null || current.playlistInfo == null ||
+                playerData.getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
+            return;
+        }
+
+        // NOTE: Shuffle only user created playlists (size != -1)
+        if (current.playlistInfo.getSize() >  MIN_SHUFFLE_SIZE) {
+            Video video = new Video();
+            video.playlistId = current.playlistId;
+            video.playlistIndex = Utils.getRandomIndex(current.playlistInfo.getCurrentIndex(), current.playlistInfo.getSize());
+            MediaServiceManager.instance().loadMetadata(video, randomMetadata -> {
+                if (randomMetadata.getNextVideo() == null) {
+                    return;
+                }
+
+                current.nextMediaItem = SimpleMediaItem.from(randomMetadata);
+                current.isShuffled = true;
+                player.setNextTitle(Video.from(current.nextMediaItem));
+            });
+        }
+        //else {
+        //    VideoGroup topRow = player.getSuggestionsByIndex(0); // the playlist row
+        //
+        //    if (topRow != null && topRow.isChapters()) {
+        //        topRow = player.getSuggestionsByIndex(1);
+        //    }
+        //
+        //    if (topRow != null) {
+        //        int currentIdx = topRow.indexOf(current);
+        //        int randomIndex = Utils.getRandomIndex(currentIdx, topRow.getSize());
+        //
+        //        if (randomIndex != -1) {
+        //            Video nextVideo = topRow.get(randomIndex);
+        //            current.nextMediaItem = SimpleMediaItem.from(nextVideo);
+        //            current.isShuffled = true;
+        //            player.setNextTitle(nextVideo);
+        //        }
+        //    }
+        //}
+    }*/
+
+
+
+// we'll all miss her so
 
 
 // ** //
     private void initRandomNext() {
-        Log.d("SHUFFLE", "ENTER loadRandomNext");
+        Log.d("SHUFFLE", "ENTER initRandomNext");
         MediaServiceManager.instance().disposeActions();
         if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) return;
         loadNextShuffleStrict();
@@ -667,7 +766,7 @@ public class VideoLoaderController extends BasePlayerController {
     }
 
 
-    private boolean isSubtitlesEnabled() {
+    /*private boolean isSubtitlesEnabled() {
         return getPlayer() != null && !FormatItem.SUBTITLE_NONE.equals(getPlayer().getSubtitleFormat());
     }
 
@@ -688,7 +787,7 @@ public class VideoLoaderController extends BasePlayerController {
 
         return (!getVideo().isLive || getVideo().isLiveEnd)
                 && getPlayer().getDurationMs() - getPlayer().getPositionMs() < STREAM_END_THRESHOLD_MS;
-    }
+    }*/
 
     private boolean isOfflineVideo() {
         if (getPlayer() == null || getVideo() == null) {
@@ -699,7 +798,7 @@ public class VideoLoaderController extends BasePlayerController {
     }
 
 
-    private void lowerVideoQuality() {
+    /*private void lowerVideoQuality() {
         if (getPlayer() == null) {
             return;
         }
@@ -716,7 +815,7 @@ public class VideoLoaderController extends BasePlayerController {
         if (videoFormats.size() > nextIdx) {
             getPlayer().setFormat(videoFormats.get(nextIdx));
         }
-    }
+    }*/
 
 
 // ** //
@@ -774,6 +873,7 @@ private Video peekNextShuffleVideo() {
                 getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
             return null;
         }
+        Log.d("SHUFFLE", "ENTER peekNextShuffleVideo");
 
         // ако вече е готов → връщаме
         if (mShuffleManager.getPendingShuffleNext() != null) {
@@ -882,7 +982,7 @@ private Video peekNextShuffleVideo() {
     private void loadNextShuffleStrict() {
         Log.d("SHUFFLE", "ENTER loadNextShuffleStrict");
 
-        int size = getVideo().playlistInfo != null
+        /*int size = getVideo().playlistInfo != null
                 ? getVideo().playlistInfo.getSize()
                 : 0;
 
@@ -896,7 +996,7 @@ private Video peekNextShuffleVideo() {
                 fallbackToSequential();
                 return;
             }
-        }
+        }*/
 
         Video next = peekNextShuffleVideo();
         if (next == null) return;
@@ -911,6 +1011,7 @@ private Video peekNextShuffleVideo() {
         Log.d("SHUFFLE", "FALLBACK → sequential");
 
         Video next = mSuggestionsController.getNext();
+        Log.d("SHUFFLE", "Next - "+next.title);
 
         if (next != null) {
             openVideoInt(next);

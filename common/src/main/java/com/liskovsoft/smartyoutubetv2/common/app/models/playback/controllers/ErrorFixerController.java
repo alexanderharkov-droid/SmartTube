@@ -308,11 +308,26 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
                 Helpers.equalsAny(className, "PoTokenException", "BadWebViewException")) {
             YouTubeServiceManager.instance().switchNextClient();
             mVideoLoaderController.reloadVideo();
-        } else if (Helpers.containsAny(message, "is not defined")) {
+        }
+     else if (Helpers.containsAny(message, "fromNullable result is null")) {
+        Log.d("SHUFFLE", "FORMAT ERROR: fromNullable -> skip video");
+            Log.d("SHUFFLE", "FORMAT ERROR");
+            Log.d("SHUFFLE", "video=" + getVideo());
+            Log.d("SHUFFLE", "videoId=" + getVideo().videoId);
+            Log.d("SHUFFLE", "playlistId=" + getVideo().playlistId);
+            Log.d("SHUFFLE", "playlistIndex=" + getVideo().playlistIndex);
+            Log.d("SHUFFLE", "playlistInfo=" + getVideo().playlistInfo);
+            Log.d("SHUFFLE", "nextMediaItem=" + (getVideo().nextMediaItem != null));
+            Log.d("SHUFFLE", "isShuffled=" + getVideo().isShuffled);
+            //mVideoLoaderController.loadNext();
+    }
+
+        else if (Helpers.containsAny(message, "is not defined")) {
             YouTubeServiceManager.instance().invalidateCache();
             mVideoLoaderController.reloadVideo();
         } else {
             Log.e(TAG, "Probably no internet connection");
+            Log.d("SHUFFLE", "Probably no internet connection; runFormatErrorAction -> reloadVideo()");
             mVideoLoaderController.reloadVideo();
         }
     }

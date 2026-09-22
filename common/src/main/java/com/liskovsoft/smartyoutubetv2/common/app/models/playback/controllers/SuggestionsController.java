@@ -275,28 +275,31 @@ public class SuggestionsController extends BasePlayerController {
     }
 
     public Video getNext() {
-//<<<<<<< HEAD
         if (getPlayer() == null || getVideo() == null) {
             return null;
         }
 
-//=======
-        Log.d("SHUFFLE", "SuggestionsController.getNext CALLED");
-//>>>>>>> e0d3bdac9 (WIP: my shuffle changes before upstream sync)
+        //Log.d("SHUFFLE", "SuggestionsController.getNext CALLED");
 
         Video result = null;
         Video next = Playlist.instance().getNext();
 
+        /*Log.d("SHUFFLE", "Playlist.getNext() = " + next);
+        Log.d("SHUFFLE", "mNextSectionVideo = " + mNextSectionVideo);
+        Log.d("SHUFFLE", "current.nextMediaItem = "
+                + (getVideo().nextMediaItem != null));*/
+
+
         if (next != null) {
             next.fromQueue = true;
             result = next;
-            Log.d("SHUFFLE", "result = next");
+            //Log.d("SHUFFLE", "result = next");
         } else if (mNextSectionVideo != null && !getVideo().isShuffled) { // 🔥 важно
             result = mNextSectionVideo;
-            Log.d("SHUFFLE", "result = mNextSectionVideo");
+            //Log.d("SHUFFLE", "result = mNextSectionVideo");
         } else if (getVideo() != null && getVideo().nextMediaItem != null) { // 🔥 upstream-safe
             result = Video.from(getVideo().nextMediaItem);
-            Log.d("SHUFFLE", "Video.from(nextMediaItem)");
+            //Log.d("SHUFFLE", "Video.from(nextMediaItem)");
         }
 
         return result;
@@ -566,6 +569,8 @@ public class SuggestionsController extends BasePlayerController {
     }
 
     private void appendSectionPlaylistIfNeeded(Video video) {
+        //Log.d("SHUFFLE", "appendSectionPlaylistIfNeeded: " + video.videoId);
+
         if (getPlayer() == null) {
             return;
         }
@@ -731,6 +736,8 @@ public class SuggestionsController extends BasePlayerController {
     }
 
     private void findNextSectionVideo(Video video) {
+        //Log.d("SHUFFLE", "findNextSectionVideo: " + video.videoId);
+
         if (getPlayer() == null) {
             return;
         }
