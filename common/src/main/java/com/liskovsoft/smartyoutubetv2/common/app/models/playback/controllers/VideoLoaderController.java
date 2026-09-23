@@ -70,19 +70,9 @@ public class VideoLoaderController extends BasePlayerController {
     };
 
     public VideoLoaderController() {
-        //Log.d("SHUFFLE", "VideoLoaderController CREATED");
         mPlaylist = Playlist.instance();
         mShuffleManager = new ShuffleManager();
     }
-
-// ** //
-  /*  private List<Integer> shuffleOrder = null;
-    private int shufflePos = 0;
-    //private String shufflePlaylistId = null;
-    // кеширано „следващо“, за да няма разминаване
-    @Nullable
-    private Video pendingShuffleNext;
-    private int globalPlaylistSize = 0; */
 
     private ShuffleManager mShuffleManager;
 
@@ -175,27 +165,6 @@ public class VideoLoaderController extends BasePlayerController {
         }
     }
 
-    // Original
-    /*public void loadNext() {
-        Log.d("SHUFFLE", "ENTER loadNext Original");
-        if (getPlayer() == null || getVideo() == null) {
-            return;
-        }
-
-        Video next = mSuggestionsController.getNext();
-
-        if (next != null) {
-            openVideoInt(next);
-        } else {
-            waitMetadataSync(getVideo(), true);
-        }
-
-        if (getPlayerTweaksData().isPlayerUiOnNextEnabled()) {
-            getPlayer().showOverlay(true);
-        }
-    }*/
-
-// ** //
     public void loadNext() {
         Log.d("SHUFFLE", "-----------------------------------------");
         Log.d("SHUFFLE", "ENTER loadNext");
@@ -207,7 +176,7 @@ public class VideoLoaderController extends BasePlayerController {
 
             Video next;
 
-            if (getPlayerData().getPlaybackMode() == PlayerConstants.  && getVideo().playlistInfo.getSize() != -1) {
+            if (getPlayerData().getPlaybackMode() == PlayerConstants.PLAYBACK_MODE_SHUFFLE && getVideo().playlistInfo != null && getVideo().playlistInfo.getSize() != -1) {
                 next = consumeNextShuffleVideo();
             } else {
                 next = mSuggestionsController.getNext();
@@ -350,11 +319,6 @@ public class VideoLoaderController extends BasePlayerController {
                                getPlayer().showProgressBar(false);
                                //Log.d("SHUFFLE", "ERROR - "+error.toString());
 // ** //
-                               //fallbackToSequential();
-                               //getVideo().playlistInfo.getCurrentIndex();
-                               //Video next = new Video();
-                               //next.id = getVideo().playlistInfo.getCurrentIndex()+1;
-
                                if (Helpers.containsAny(error.getMessage(), "fromNullable result is null")) {
                                    Log.d("SHUFFLE", "FORMAT ERROR: fromNullable -> loadSuggestions + loadNext");
 
@@ -364,13 +328,10 @@ public class VideoLoaderController extends BasePlayerController {
                                        mSuggestionsController.loadSuggestions(getVideo());
                                        loadNextVideo(5_000);
                                    }
-                                   //mSuggestionsController.loadSuggestions(getVideo());
-                                   //loadNextVideo(5_000);
                                } else {
                                    mErrorFixerController.runFormatErrorAction(error);
                                }
 
-                               //mErrorFixerController.runFormatErrorAction(error);
                            });
     }
 
@@ -645,7 +606,12 @@ public class VideoLoaderController extends BasePlayerController {
     @Override
     public void onMetadata(MediaItemMetadata metadata) {
         Log.d("SHUFFLE", "ENTER onMetadata");
-        initRandomNext();
+        if (getPlayerData().getPlaybackMode() == PlayerConstants.PLAYBACK_MODE_SHUFFLE
+                && getVideo().playlistInfo != null
+                && getVideo().playlistInfo.getSize() != -1)
+        {
+            initRandomNext();
+        }
     }
 
 
@@ -659,65 +625,14 @@ public class VideoLoaderController extends BasePlayerController {
     //    Utils.removeCallbacks(mOnLongBuffering);
     }
 
-
-    /*private void initRandomNext() {
-        MediaServiceManager.instance().disposeActions();
-
-        PlaybackView player = getPlayer();
-        PlayerData playerData = getPlayerData();
-        Video current = getVideo();
-
-        if (player == null || playerData == null || current == null || current.playlistInfo == null ||
-                playerData.getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
-            return;
-        }
-
-        // NOTE: Shuffle only user created playlists (size != -1)
-        if (current.playlistInfo.getSize() >  MIN_SHUFFLE_SIZE) {
-            Video video = new Video();
-            video.playlistId = current.playlistId;
-            video.playlistIndex = Utils.getRandomIndex(current.playlistInfo.getCurrentIndex(), current.playlistInfo.getSize());
-            MediaServiceManager.instance().loadMetadata(video, randomMetadata -> {
-                if (randomMetadata.getNextVideo() == null) {
-                    return;
-                }
-
-                current.nextMediaItem = SimpleMediaItem.from(randomMetadata);
-                current.isShuffled = true;
-                player.setNextTitle(Video.from(current.nextMediaItem));
-            });
-        }
-        //else {
-        //    VideoGroup topRow = player.getSuggestionsByIndex(0); // the playlist row
-        //
-        //    if (topRow != null && topRow.isChapters()) {
-        //        topRow = player.getSuggestionsByIndex(1);
-        //    }
-        //
-        //    if (topRow != null) {
-        //        int currentIdx = topRow.indexOf(current);
-        //        int randomIndex = Utils.getRandomIndex(currentIdx, topRow.getSize());
-        //
-        //        if (randomIndex != -1) {
-        //            Video nextVideo = topRow.get(randomIndex);
-        //            current.nextMediaItem = SimpleMediaItem.from(nextVideo);
-        //            current.isShuffled = true;
-        //            player.setNextTitle(nextVideo);
-        //        }
-        //    }
-        //}
-    }*/
-
-
-
-// we'll all miss her so
-
-
 // ** //
     private void initRandomNext() {
         Log.d("SHUFFLE", "ENTER initRandomNext");
         MediaServiceManager.instance().disposeActions();
-        if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) return;
+        if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE
+                //|| getVideo().playlistInfo == null
+                //|| getVideo().playlistInfo.getSize() == -1
+        ) return;
         loadNextShuffleStrict();
     }
 
@@ -765,30 +680,6 @@ public class VideoLoaderController extends BasePlayerController {
         }
     }
 
-
-    /*private boolean isSubtitlesEnabled() {
-        return getPlayer() != null && !FormatItem.SUBTITLE_NONE.equals(getPlayer().getSubtitleFormat());
-    }
-
-    private void disableSubtitles() {
-        //if (getVideo() != null) {
-        //    getPlayerData().disableSubtitlesPerChannel(getVideo().channelId);
-        //}
-
-        getPlayerData().setSubtitlesPerChannelEnabled(false); // Important!
-        getPlayerData().setFormat(FormatItem.SUBTITLE_NONE);
-    }
-
-
-    private boolean isPlaybackEnded() {
-        if (getPlayer() == null || getVideo() == null) {
-            return false;
-        }
-
-        return (!getVideo().isLive || getVideo().isLiveEnd)
-                && getPlayer().getDurationMs() - getPlayer().getPositionMs() < STREAM_END_THRESHOLD_MS;
-    }*/
-
     private boolean isOfflineVideo() {
         if (getPlayer() == null || getVideo() == null) {
             return false;
@@ -796,72 +687,6 @@ public class VideoLoaderController extends BasePlayerController {
 
         return !getVideo().isLive && !getVideo().isLiveEnd;
     }
-
-
-    /*private void lowerVideoQuality() {
-        if (getPlayer() == null) {
-            return;
-        }
-
-        List<FormatItem> videoFormats = getPlayer().getVideoFormats();
-
-        if (videoFormats == null) {
-            return;
-        }
-
-        int idx = videoFormats.indexOf(getPlayer().getVideoFormat());
-        int nextIdx = idx + 1;
-
-        if (videoFormats.size() > nextIdx) {
-            getPlayer().setFormat(videoFormats.get(nextIdx));
-        }
-    }*/
-
-
-// ** //
-  /*  private void initShuffle(int size, int currentIndex) {
-        shuffleOrder = new ArrayList<>();
-
-        for (int i = 0; i < size; i++) {
-            shuffleOrder.add(i);
-        }
-
-        shuffleOrder.remove(Integer.valueOf(currentIndex));
-        Collections.shuffle(shuffleOrder);
-        shuffleOrder.add(0, currentIndex);
-
-        shufflePos = 0;
-
-        Log.d("SHUFFLE",
-                "initShuffle | order=" + shuffleOrder +
-                        " startPos=0 currentIdx=" + currentIndex + " | title=" + getVideo().title
-        );
-    } */
-
-// ** //
-  /*  private void reshuffleKeepingCurrent() {
-        int currentIdx = shuffleOrder.get(shufflePos);
-
-        shuffleOrder.remove(Integer.valueOf(currentIdx));
-        Collections.shuffle(shuffleOrder);
-        shuffleOrder.add(0, currentIdx);
-
-        shufflePos = 0;
-
-        Log.d("SHUFFLE",
-                "reshuffleKeepingCurrent - NEW SHUFFLE CYCLE order=" + shuffleOrder
-        );
-    } */
-
-
-// ** //
-/*    private void ensureShuffleInitialized(int size) {
-        if (shuffleOrder == null || shuffleOrder.size() != size) {
-            int currentIdx = getVideo().playlistInfo.getCurrentIndex();
-            initShuffle(size, currentIdx);
-            pendingShuffleNext = null;
-        }
-    } */
 
 // ** //
 @Nullable
@@ -880,26 +705,6 @@ private Video peekNextShuffleVideo() {
             return mShuffleManager.getPendingShuffleNext();
         }
 
-        /*int size;
-
-        if (getVideo().playlistInfo != null) {
-            size = getVideo().playlistInfo.getSize();
-            mShuffleManager.setGlobalPlaylistSize(size);
-        } else {
-            size = mShuffleManager.getGlobalPlaylistSize();
-        }
-
-        if (size <= 1) return null;
-
-        int currentIndex = getVideo().playlistInfo.getCurrentIndex();
-
-        int nextIdx = mShuffleManager.getNextIndex(size, currentIndex);
-        int nextPos = mShuffleManager.getNextPosition(size, currentIndex);
-
-        Video request = new Video();
-        request.playlistId = getVideo().playlistId;
-        request.playlistIndex = nextIdx;*/
-
         Video request = mShuffleManager.createNextRequest(getVideo());
 
         if (request == null) {
@@ -907,8 +712,6 @@ private Video peekNextShuffleVideo() {
         }
 
         int nextIdx = request.playlistIndex;
-
-        //int finalNextPos = nextPos;
 
         MediaServiceManager.instance().loadMetadata(request, metadata -> {
             if (metadata == null) {
@@ -930,10 +733,6 @@ private Video peekNextShuffleVideo() {
 
             getPlayer().setNextTitle(candidate);
 
-            /*Log.d("SHUFFLE",
-                    "peekNextShuffleVideo - LOADED NEXT | nextPos=" + finalNextPos +
-                            " | idx=" + nextIdx +
-                            " | title=" + candidate.getTitle());*/
             Log.d("SHUFFLE",
                     "peekNextShuffleVideo - LOADED NEXT | idx=" + nextIdx +
                             " | title=" + candidate.getTitle());
@@ -947,31 +746,6 @@ private Video peekNextShuffleVideo() {
     return null; // 🔴 важно!
 }
 
-// ** //
-    /*@Nullable
-    private Video consumeNextShuffleVideo() {
-        try {
-            Video next = peekNextShuffleVideo();
-            if (next == null) {
-                Log.d("SHUFFLE",
-                        "CONSUME IS NULL");
-                return null;
-            }
-
-            mShuffleManager.advance();
-
-
-            Log.d("SHUFFLE",
-                    "consumeNextShuffleVideo - CONSUME | title=" + next.title
-            );
-
-            return next;
-        } catch (Exception e) {
-            Log.d("SHUFFLE","Error in consumeNextShuffleVideo - "+e.toString());
-            return null;
-        }
-    }*/
-
     @Nullable
     private Video consumeNextShuffleVideo() {
         return mShuffleManager.consumePending();
@@ -982,22 +756,6 @@ private Video peekNextShuffleVideo() {
     private void loadNextShuffleStrict() {
         Log.d("SHUFFLE", "ENTER loadNextShuffleStrict");
 
-        /*int size = getVideo().playlistInfo != null
-                ? getVideo().playlistInfo.getSize()
-                : 0;
-
-        if (size <= 1) {
-            Log.d("SHUFFLE", "Video is not playable. Loading next.");
-
-            // 🔥 fallback към нормално next
-            //if (shuffleOrder == null || shuffleOrder.isEmpty()) {
-            if (mShuffleManager.isEmpty()) {
-                Log.d("SHUFFLE", "Playlist not ready or too small, fallback");
-                fallbackToSequential();
-                return;
-            }
-        }*/
-
         Video next = peekNextShuffleVideo();
         if (next == null) return;
 
@@ -1005,53 +763,7 @@ private Video peekNextShuffleVideo() {
         getPlayer().setNextTitle(next); // UI hint
     }
 
-
-// ** //
-    private void fallbackToSequential() {
-        Log.d("SHUFFLE", "FALLBACK → sequential");
-
-        Video next = mSuggestionsController.getNext();
-        Log.d("SHUFFLE", "Next - "+next.title);
-
-        if (next != null) {
-            openVideoInt(next);
-        } else {
-            waitMetadataSync(getVideo(), true);
-        }
-    }
-
-    private void loadNextAutoplay() {
-        // тук копираш оригиналния код на SmartTube
-        // без промени
-        Log.d("SHUFFLE", "ENTER loadNextAutoplay");
-        VideoGroup topRow = getPlayer().getSuggestionsByIndex(0); // the playlist row
-        if (topRow != null) {
-            int currentIdx = topRow.indexOf(getVideo());
-
-            // ** //
-            int randomIndex = Utils.getRandomIndex(currentIdx, topRow.getSize());
-
-            /*int randomIndex = getNextShuffleIndexNoRepeat(
-                    currentIdx,
-                    topRow.getSize(),
-                    getVideo()
-            );*/
-
-
-            if (randomIndex != -1) {
-                Video nextVideo = topRow.get(randomIndex);
-                getVideo().nextMediaItem = SimpleMediaItem.from(nextVideo);
-                getPlayer().setNextTitle(nextVideo);
-            }
-
-            /*Video next = peekNextShuffleVideo();
-            if (next == null) return;
-
-            getPlayer().setNextTitle(next); // UI hint*/
-        }
-    }
+    // we'll all miss her so
 
     //adb logcat *:S SHUFFLE:D
-
-
 }

@@ -278,7 +278,7 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
         return errorTitle;
     }
 
-    public void runFormatErrorAction(Throwable error) {
+    /*public void runFormatErrorAction(Throwable error) {
         if (getPlayer() == null) {
             return;
         }
@@ -330,7 +330,49 @@ public class ErrorFixerController extends BasePlayerController implements OnLong
             Log.d("SHUFFLE", "Probably no internet connection; runFormatErrorAction -> reloadVideo()");
             mVideoLoaderController.reloadVideo();
         }
+    }*/
+
+
+    public void runFormatErrorAction(Throwable error) {
+        if (getPlayer() == null) {
+            return;
+        }
+
+        if (isEmbedPlayer()) {
+            getPlayer().finish();
+            return;
+        }
+
+        String message = error.getMessage();
+        String className = error.getClass().getSimpleName();
+        String fullMsg = String.format("loadFormatInfo error: %s: %s", className, Utils.getStackTraceAsString(error));
+        Log.e(TAG, fullMsg);
+
+        if (!Helpers.containsAny(message, "fromNullable result is null")) {
+            MessageHelpers.showLongMessage(getContext(), fullMsg);
+            if (getPlayer() != null) {
+                getPlayer().setTitle(fullMsg);
+            }
+        }
+
+        if (Utils.fixRetrofitErrors(getContext(), error)) {
+            return;
+        }
+
+        if (Helpers.containsAny(message, "Unexpected token", "Syntax error", "invalid argument") || // temporal fix
+                Helpers.equalsAny(className, "PoTokenException", "BadWebViewException")) {
+            YouTubeServiceManager.instance().switchNextClient();
+            mVideoLoaderController.reloadVideo();
+        } else if (Helpers.containsAny(message, "is not defined")) {
+            YouTubeServiceManager.instance().invalidateCache();
+            mVideoLoaderController.reloadVideo();
+        } else {
+            Log.e(TAG, "Probably no internet connection");
+            mVideoLoaderController.reloadVideo();
+        }
     }
+
+
 
     /**
      * Bad idea. Faster source is different among devices

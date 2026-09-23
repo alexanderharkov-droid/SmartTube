@@ -227,7 +227,7 @@ public class SuggestionsController extends BasePlayerController {
         video.sync(mediaItemMetadata);
         getPlayer().setVideo(video);
 // ** //
-        if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE) {
+        if (getPlayerData().getPlaybackMode() != PlayerConstants.PLAYBACK_MODE_SHUFFLE || getVideo().playlistInfo == null || getVideo().playlistInfo.getSize() == -1) {
             getPlayer().setNextTitle(getNext());
         }
 
@@ -279,7 +279,7 @@ public class SuggestionsController extends BasePlayerController {
             return null;
         }
 
-        //Log.d("SHUFFLE", "SuggestionsController.getNext CALLED");
+        Log.d("SHUFFLE", "SuggestionsController.getNext CALLED");
 
         Video result = null;
         Video next = Playlist.instance().getNext();
